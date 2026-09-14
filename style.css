@@ -1,0 +1,368 @@
+body {
+  margin: 0;
+  background: #111;
+  overflow: hidden;
+}
+
+.map-container {
+  position: relative;
+    width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  overflow: hidden;
+}
+
+/* 이미지 + 마커가 함께 움직이는 하나의 지도 레이어 */
+.map-layer {
+  position: relative;
+
+  width: min(100vw, 100vh);
+  height: min(100vw, 100vh);
+
+  flex-shrink: 0;
+
+  transform-origin: center;
+  cursor: crosshair;
+
+  user-select: none;
+  -webkit-user-drag: none;
+
+  
+  transform: translateZ(0);
+}
+
+.map-tiles {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.map-tiles img {
+  position: absolute;
+  width: 25%;
+  height: 25%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.me-marker {
+  position: absolute;
+
+  width: 8px;
+  height: 8px;
+
+  background: #32ff6a;
+  border: 1px solid white;
+  border-radius: 50%;
+
+  transform: translate(-50%, -50%) scale(calc(1 / var(--map-scale)));
+
+  display: none;
+  pointer-events: none;
+
+  z-index: 3;
+
+}
+
+.target-marker {
+  position: absolute;
+
+  width: 8px;
+  height: 8px;
+
+  background: #ff3030;
+  border: 1px solid white;
+  border-radius: 50%;
+
+  transform: translate(-50%, -50%) scale(calc(1 / var(--map-scale)));
+
+  display: none;
+  pointer-events: none;
+
+  z-index: 3;
+
+}
+
+.distance-label {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  transform: translate(-50%, -50%);
+
+  padding: 7px 12px 8px;
+
+  background: rgba(12, 14, 16, 0.82);
+  color: rgba(255, 255, 255, 0.95);
+
+  font-family: Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.35);
+
+  backdrop-filter: blur(3px);
+
+  display: none;
+  pointer-events: none;
+
+  z-index: 10;
+}
+
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  background-image:
+    linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.22) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.22) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    1.22549% 1.22549%;
+
+  z-index: 2;
+}
+
+.watermark {
+  position: absolute;
+
+  right: 24px;
+  bottom: 20px;
+
+  
+ color: white;
+  opacity: 0.75;
+
+  font-size: 37px;
+  font-weight: 600;
+
+  letter-spacing: 0.5px;
+
+  line-height: 1.1;
+
+  pointer-events: none;
+
+  z-index: 20;
+}
+
+.watermark .version {
+  font-size: 16px;
+  margin-top: 4px;
+
+  letter-spacing: 1px;
+}
+
+.measurement-overlay {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: visible;
+
+  pointer-events: none;
+
+  z-index: 2;
+}
+
+.measurement-line {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 0.;
+
+  vector-effect: non-scaling-stroke;
+
+  display: none;
+}
+
+.poi-marker {
+  position: absolute;
+
+  width: 0;
+  height: 0;
+
+  pointer-events: auto;
+
+  z-index: 4;
+}
+
+.poi-marker-icon {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  width: 20px;
+  height: 20px;
+
+  transform:
+    translate(-50%, -50%)
+    scale(calc(1 / var(--map-scale)));
+
+  transform-origin: center;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+
+  color: white;
+
+  box-sizing: border-box;
+}
+
+/* POI 타입별 배경색 */
+
+.poi-marker[data-type="car"] .poi-marker-icon {
+  background: #3478d4;
+}
+
+.poi-marker[data-type="glider"] .poi-marker-icon {
+  background: #e5b82e;
+}
+
+.poi-marker[data-type="secretRoom"] .poi-marker-icon {
+  background: #3ca65a;
+}
+
+.poi-marker[data-type="gasStation"] .poi-marker-icon {
+  background: #d94a4a;
+}
+
+.poi-marker-icon svg {
+  width: 13px;
+  height: 13px;
+
+  display: block;
+
+  fill: currentColor;
+}
+
+.map-info-panel {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+
+  width: 240px;
+  padding: 18px 20px;
+
+  background: rgba(12, 14, 16, 0.88);
+  color: white;
+
+  font-family: Arial, sans-serif;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+
+  z-index: 25;
+}
+
+.map-info-title {
+  margin-bottom: 14px;
+
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.map-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 10px 0;
+
+  font-size: 15px;
+
+  cursor: pointer;
+}
+
+.map-toggle + .map-toggle {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.map-toggle input {
+  cursor: pointer;
+}
+
+.map-toggle-name {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.map-toggle-icon {
+  width: 26px;
+  height: 26px;
+
+  flex: 0 0 26px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  color: white;
+}
+
+.map-toggle-icon svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+  fill: currentColor;
+}
+
+.map-toggle-icon.car-icon {
+  background: #3478d4;
+}
+
+.map-toggle-icon.glider-icon {
+  background: #e5b82e;
+}
+
+.map-toggle-icon.secret-room-icon {
+  background: #3ca65a;
+}
+
+.map-toggle-icon.gas-station-icon {
+  background: #d94a4a;
+}
