@@ -13,6 +13,7 @@ let pointA = null;
 let pointB = null;
 
 let scale = 1;
+let targetScale = 1;
 
 let isDragging = false;
 let hasDragged = false;
@@ -278,51 +279,76 @@ async function loadPoiData() {
   }
 }
 
-/* 마우스 위치 중심 줌 */
+/* 마우스 위치 중심 부드러운 줌 */
+let zoomAnimationId = null;
+let zoomMouseX = 0;
+let zoomMouseY = 0;
+
 mapLayer.addEventListener("wheel", (event) => {
   event.preventDefault();
-
-  const oldScale = scale;
-
-  if (event.deltaY < 0) {
-    scale += 0.1;
-  } else {
-    scale -= 0.1;
-  }
-
-  scale = Math.min(
-    Math.max(scale, 1),
-    8
-  );
-
-  if (scale === oldScale) return;
 
   const containerRect =
     container.getBoundingClientRect();
 
-  const mouseX =
+  zoomMouseX =
     event.clientX -
     containerRect.left -
     containerRect.width / 2;
 
-  const mouseY =
+  zoomMouseY =
     event.clientY -
     containerRect.top -
     containerRect.height / 2;
 
-  const scaleRatio = scale / oldScale;
+  if (event.deltaY < 0) {
+    targetScale *= 1.35;
+  } else {
+    targetScale /= 1.35;
+  }
 
-  offsetX =
-    mouseX -
-    (mouseX - offsetX) * scaleRatio;
+  targetScale = Math.min(
+    Math.max(targetScale, 1),
+    8
+  );
 
-  offsetY =
-    mouseY -
-    (mouseY - offsetY) * scaleRatio;
-
-  requestTransformUpdate();
+  if (!zoomAnimationId) {
+    animateZoom();
+  }
 });
 
+function animateZoom() {
+  const difference =
+    targetScale - scale;
+
+  if (Math.abs(difference) < 0.001) {
+    scale = targetScale;
+    updateTransform();
+
+    zoomAnimationId = null;
+    return;
+  }
+
+  const oldScale = scale;
+
+  /* 목표 배율을 부드럽게 따라감 */
+  scale += difference * 0.22;
+
+  const scaleRatio =
+    scale / oldScale;
+
+  offsetX =
+    zoomMouseX -
+    (zoomMouseX - offsetX) * scaleRatio;
+
+  offsetY =
+    zoomMouseY -
+    (zoomMouseY - offsetY) * scaleRatio;
+
+  updateTransform();
+
+  zoomAnimationId =
+    requestAnimationFrame(animateZoom);
+}
 
 /* 마우스 누르기 */
 mapLayer.addEventListener("mousedown", (event) => {
